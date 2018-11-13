@@ -1,14 +1,14 @@
 import * as fs from "fs";
-import * as readline from "readline";
+import { Linereader } from "./linereader";
 
-interface index {
+export interface TextIndex {
   start: number;
   end: number;
-  children: { [key: string]: index };
+  children: { [key: string]: TextIndex };
 }
 
-class indexer {
-  _stack: index[];
+class Indexer {
+  _stack: TextIndex[];
   _prefix: string;
   _lineno: number;
 
@@ -21,19 +21,20 @@ class indexer {
   public index(
     filename: string,
     keyfunc: (line: string) => string
-  ): Promise<index> {
+  ): Promise<TextIndex> {
     this._stack.push({ start: 0, end: 0, children: {} });
     this._prefix = "";
 
-    return new Promise<index>((resolve, _) => {
+    return new Promise<TextIndex>((resolve, _) => {
       const rs = fs.createReadStream(filename);
-      const rl = readline.createInterface(rs);
+      const rl = new Linereader(rs);
       rl.on("line", line => {
         line = keyfunc(line);
         this.process(line);
       });
       rl.on("close", () => {
         resolve(this.finish() || { start: 0, end: 0, children: {} });
+        rs.destroy();
       });
     });
   }
@@ -42,22 +43,24 @@ class indexer {
     if (!line.startsWith(this._prefix)) {
       this.exit(line);
     }
-    if (line != this._prefix && this._stack.length < 8) {
+    if (line !== this._prefix) {
       this.enter(line);
     }
     this._lineno++;
   }
 
   private enter(line: string) {
-    const key = line.slice(this._prefix.length)[0];
-    const node = {
-      start: this._lineno,
-      end: this._lineno,
-      children: {}
-    };
-    this._stack[this._stack.length - 1].children[key] = node;
-    this._stack.push(node);
-    this._prefix = this._prefix + key;
+    while (this._prefix !== line && this._stack.length < 8) {
+      const key = line.slice(this._prefix.length)[0];
+      const node = {
+        start: this._lineno,
+        end: this._lineno,
+        children: {}
+      };
+      this._stack[this._stack.length - 1].children[key] = node;
+      this._stack.push(node);
+      this._prefix = this._prefix + key;
+    }
   }
 
   private exit(line: string) {
@@ -66,7 +69,7 @@ class indexer {
     }
   }
 
-  private finish(): index | null {
+  private finish(): TextIndex | null {
     var root = null;
     while (this._stack.length) {
       root = this.pop();
@@ -74,17 +77,17 @@ class indexer {
     return root;
   }
 
-  private pop(): index | null {
+  private pop(): TextIndex | null {
     this._stack[this._stack.length - 1].end = this._lineno;
     this._prefix = this._prefix.slice(0, this._prefix.length - 1);
     return this._stack.pop() || null;
   }
 }
 
-export class txtindx {
+export class TextIndexer {
   _filename: string;
   _keyfunc: (line: string) => string;
-  _index: Promise<index>;
+  _index: Promise<TextIndex>;
 
   constructor(filename: string, keyfunc: (line: string) => string) {
     this._filename = filename;
@@ -92,12 +95,12 @@ export class txtindx {
     this._index = Promise.resolve({ start: 0, end: 0, children: {} });
   }
 
-  public index(): Promise<index> {
-    this._index = new indexer().index(this._filename, this._keyfunc);
+  public index(): Promise<TextIndex> {
+    this._index = new Indexer().index(this._filename, this._keyfunc);
     return this._index;
   }
 
-  public async lookup(key: string): Promise<index | null> {
+  public async lookup(key: string): Promise<TextIndex | null> {
     let index = await this._index;
     for (let i = 0; i < key.length; ++i) {
       const ki = key[i];
