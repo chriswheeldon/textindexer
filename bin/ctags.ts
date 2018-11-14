@@ -1,14 +1,18 @@
-import { TextIndexer } from "../index";
+import { Textindexer } from "../index";
 import { Linereader } from "../linereader";
 import * as fs from "fs";
 import { performance } from "perf_hooks";
 
 const filename = process.argv[2];
-const lookup = "im_message_free";
+const lookup = process.argv[3];
 
-const ti = new TextIndexer(filename, line => {
-  return line;
-});
+const ti = new Textindexer(
+  filename,
+  line => {
+    return line.split("\t")[0];
+  },
+  6
+);
 
 const index_start = performance.now();
 ti.index().then(async index => {

@@ -14,9 +14,7 @@
         "${workspaceFolder}/build/bin/*",
         "${workspaceFolder}/build/*"
       ],
-      "args": [
-        "bin/testdata.txt"
-      ],
+      "args": ["bin/testdata.txt"],
       "sourceMaps": true
     },
     {
@@ -29,9 +27,7 @@
         "${workspaceFolder}/build/bin/*",
         "${workspaceFolder}/build/*"
       ],
-      "args": [
-        "../software/tags"
-      ],
+      "args": ["../linux/tags", "usb_device"],
       "sourceMaps": true
     },
     {

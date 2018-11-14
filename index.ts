@@ -8,10 +8,12 @@ export interface TextIndex {
 }
 
 class Indexer {
+  _stacksize: number;
   _stack: TextIndex[];
   _prefix: string;
 
-  constructor() {
+  constructor(stacksize: number) {
+    this._stacksize = stacksize;
     this._stack = [];
     this._prefix = "";
   }
@@ -48,7 +50,10 @@ class Indexer {
 
   private enter(line: Line) {
     const value = line.value;
-    while (this._prefix !== line.value && this._stack.length < 6) {
+    while (
+      this._prefix !== line.value &&
+      this._stack.length < this._stacksize
+    ) {
       const key = value.slice(this._prefix.length)[0];
       const node = {
         start: line.offset,
@@ -82,19 +87,28 @@ class Indexer {
   }
 }
 
-export class TextIndexer {
+export class Textindexer {
   _filename: string;
   _keyfunc: (line: string) => string;
+  _stacksize: number;
   _index: Promise<TextIndex>;
 
-  constructor(filename: string, keyfunc: (line: string) => string) {
+  constructor(
+    filename: string,
+    keyfunc: (line: string) => string,
+    stacksize: number
+  ) {
     this._filename = filename;
     this._keyfunc = keyfunc;
+    this._stacksize = stacksize;
     this._index = Promise.resolve({ start: 0, end: 0, children: {} });
   }
 
   public index(): Promise<TextIndex> {
-    this._index = new Indexer().index(this._filename, this._keyfunc);
+    this._index = new Indexer(this._stacksize).index(
+      this._filename,
+      this._keyfunc
+    );
     return this._index;
   }
 
