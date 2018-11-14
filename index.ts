@@ -1,5 +1,5 @@
 import * as fs from "fs";
-import { Linereader } from "./linereader";
+import { Linereader, Line } from "./linereader";
 
 export interface TextIndex {
   start: number;
@@ -10,12 +10,10 @@ export interface TextIndex {
 class Indexer {
   _stack: TextIndex[];
   _prefix: string;
-  _lineno: number;
 
   constructor() {
     this._stack = [];
     this._prefix = "";
-    this._lineno = 0;
   }
 
   public index(
@@ -28,33 +26,33 @@ class Indexer {
     return new Promise<TextIndex>((resolve, _) => {
       const rs = fs.createReadStream(filename);
       const rl = new Linereader(rs);
-      rl.on("line", line => {
-        line = keyfunc(line);
+      rl.on("line", (line: Line) => {
+        line.value = keyfunc(line.value);
         this.process(line);
       });
-      rl.on("close", () => {
-        resolve(this.finish() || { start: 0, end: 0, children: {} });
+      rl.on("close", (bytes: number) => {
+        resolve(this.finish(bytes) || { start: 0, end: 0, children: {} });
         rs.destroy();
       });
     });
   }
 
-  private process(line: string) {
-    if (!line.startsWith(this._prefix)) {
+  private process(line: Line) {
+    if (!line.value.startsWith(this._prefix)) {
       this.exit(line);
     }
-    if (line !== this._prefix) {
+    if (line.value !== this._prefix) {
       this.enter(line);
     }
-    this._lineno++;
   }
 
-  private enter(line: string) {
-    while (this._prefix !== line && this._stack.length < 8) {
-      const key = line.slice(this._prefix.length)[0];
+  private enter(line: Line) {
+    const value = line.value;
+    while (this._prefix !== line.value && this._stack.length < 6) {
+      const key = value.slice(this._prefix.length)[0];
       const node = {
-        start: this._lineno,
-        end: this._lineno,
+        start: line.offset,
+        end: line.offset,
         children: {}
       };
       this._stack[this._stack.length - 1].children[key] = node;
@@ -63,22 +61,22 @@ class Indexer {
     }
   }
 
-  private exit(line: string) {
-    while (!line.startsWith(this._prefix)) {
-      this.pop();
+  private exit(line: Line) {
+    while (!line.value.startsWith(this._prefix)) {
+      this.pop(line.offset);
     }
   }
 
-  private finish(): TextIndex | null {
+  private finish(bytes: number): TextIndex | null {
     var root = null;
     while (this._stack.length) {
-      root = this.pop();
+      root = this.pop(bytes);
     }
     return root;
   }
 
-  private pop(): TextIndex | null {
-    this._stack[this._stack.length - 1].end = this._lineno;
+  private pop(offset: number): TextIndex | null {
+    this._stack[this._stack.length - 1].end = offset;
     this._prefix = this._prefix.slice(0, this._prefix.length - 1);
     return this._stack.pop() || null;
   }

@@ -2,12 +2,19 @@ import { ReadStream } from "fs";
 import { EventEmitter } from "events";
 import { Ringbuffer } from "./ringbuffer";
 
+export interface Line {
+  value: string;
+  offset: number;
+}
+
 export class Linereader extends EventEmitter {
   _buffer: Ringbuffer;
 
   constructor(rs: ReadStream) {
     super();
     this._buffer = new Ringbuffer(rs.readableHighWaterMark * 2);
+    const tmp = Buffer.alloc(rs.readableHighWaterMark * 2);
+    let offset = 0;
     rs.on("data", data => {
       if (this._buffer.write(data)) {
         while (true) {
@@ -15,23 +22,27 @@ export class Linereader extends EventEmitter {
           if (nl === -1) {
             break;
           }
-          const line = Buffer.alloc(nl + 1);
-          this._buffer.read(line, nl + 1);
+          this._buffer.read(tmp, nl + 1);
           if (nl > 0) {
-            const ls = line.toString(undefined, 0, nl);
-            this.emit("line", ls);
+            this.emit("line", {
+              value: tmp.toString(undefined, 0, nl),
+              offset: offset
+            });
           }
+          offset = offset + nl + 1;
         }
       }
     });
     rs.on("end", () => {
       const len = this._buffer.length();
       if (len) {
-        const line = Buffer.alloc(len);
-        this._buffer.read(line, len);
-        this.emit("line", line.toString());
+        this._buffer.read(tmp, len);
+        this.emit("line", {
+          value: tmp.toString(undefined, 0, len),
+          offset: rs.bytesRead - len
+        });
       }
-      this.emit("close");
+      this.emit("close", rs.bytesRead);
     });
   }
 }
