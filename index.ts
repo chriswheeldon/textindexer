@@ -36,7 +36,7 @@ class Indexer {
         resolve(this.finish(bytes) || { start: 0, end: 0, children: {} });
         rs.destroy();
       });
-      rs.on("error", (error) => {
+      rs.on("error", error => {
         reject(error);
         rs.destroy();
       });
@@ -109,7 +109,7 @@ export class TextIndexer {
   }
 
   public index(): Promise<TextIndex> {
-    return this._index.then((index) => {
+    return this._index.then(_ => {
       this._index = new Indexer(this._stacksize).index(
         this._filename,
         this._keyfunc
@@ -119,7 +119,7 @@ export class TextIndexer {
   }
 
   public lookup(key: string): Promise<TextIndex | null> {
-    return this._index.then((index) => {
+    return this._index.then(index => {
       for (let i = 0; i < key.length; ++i) {
         const ki = key[i];
         if (!index.children[ki]) {
