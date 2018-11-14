@@ -15,27 +15,33 @@ const ti = new TextIndexer(
 );
 
 const index_start_ms = performance.now();
-ti.index().then(async index => {
-  console.log(
-    `duration ${performance.now() -
-      index_start_ms}ms, heapUsed = ${process.memoryUsage().heapUsed / 1e6}mb`
-  );
-  const rename_start_ms = performance.now();
-  const result = await ti.lookup(lookup);
-  if (result) {
-    const lr = new LineReader(
-      fs.createReadStream(process.argv[2], {
-        start: result.start,
-        end: result.end - 1
-      })
+ti.index()
+  .then(async index => {
+    console.log(
+      `duration ${performance.now() -
+        index_start_ms}ms, heapUsed = ${process.memoryUsage().heapUsed / 1e6}mb`
     );
-    lr.on("line", line => {
-      if (line.value.split("\t")[0] === lookup) {
-        console.log(line.value);
-      }
-    });
-    lr.on("close", () => {
-      console.log(`duration ${performance.now() - rename_start_ms}ms`);
-    });
-  }
-});
+    const rename_start_ms = performance.now();
+    const result = await ti.lookup(lookup);
+    if (result) {
+      const lr = new LineReader(
+        fs.createReadStream(process.argv[2], {
+          start: result.start,
+          end: result.end - 1
+        })
+      );
+      lr.on("line", line => {
+        if (line.value.split("\t")[0] === lookup) {
+          console.log(line.value);
+        }
+      });
+      lr.on("close", () => {
+        console.log(`duration ${performance.now() - rename_start_ms}ms`);
+      });
+    } else {
+      console.log(`${lookup} not found`);
+    }
+  })
+  .catch((error) => {
+    console.log(error);
+  });

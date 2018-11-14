@@ -25,7 +25,7 @@ class Indexer {
     this._stack.push({ start: 0, end: 0, children: {} });
     this._prefix = "";
 
-    return new Promise<TextIndex>((resolve, _) => {
+    return new Promise<TextIndex>((resolve, reject) => {
       const rs = fs.createReadStream(filename);
       const rl = new LineReader(rs);
       rl.on("line", (line: Line) => {
@@ -34,6 +34,10 @@ class Indexer {
       });
       rl.on("close", (bytes: number) => {
         resolve(this.finish(bytes) || { start: 0, end: 0, children: {} });
+        rs.destroy();
+      });
+      rs.on("error", (error) => {
+        reject(error);
         rs.destroy();
       });
     });
@@ -105,22 +109,25 @@ export class TextIndexer {
   }
 
   public index(): Promise<TextIndex> {
-    this._index = new Indexer(this._stacksize).index(
-      this._filename,
-      this._keyfunc
-    );
-    return this._index;
+    return this._index.then((index) => {
+      this._index = new Indexer(this._stacksize).index(
+        this._filename,
+        this._keyfunc
+      );
+      return this._index;
+    });
   }
 
-  public async lookup(key: string): Promise<TextIndex | null> {
-    let index = await this._index;
-    for (let i = 0; i < key.length; ++i) {
-      const ki = key[i];
-      if (!index.children[ki]) {
-        break;
+  public lookup(key: string): Promise<TextIndex | null> {
+    return this._index.then((index) => {
+      for (let i = 0; i < key.length; ++i) {
+        const ki = key[i];
+        if (!index.children[ki]) {
+          return i == this._stacksize - 1 ? index : null;
+        }
+        index = index.children[ki];
       }
-      index = index.children[ki];
-    }
-    return index;
+      return index;
+    });
   }
 }
