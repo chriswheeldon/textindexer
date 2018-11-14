@@ -1,18 +1,18 @@
 import { ReadStream } from "fs";
 import { EventEmitter } from "events";
-import { Ringbuffer } from "./ringbuffer";
+import { RingBuffer } from "./ringbuffer";
 
 export interface Line {
   value: string;
   offset: number;
 }
 
-export class Linereader extends EventEmitter {
-  _buffer: Ringbuffer;
+export class LineReader extends EventEmitter {
+  _buffer: RingBuffer;
 
   constructor(rs: ReadStream) {
     super();
-    this._buffer = new Ringbuffer(rs.readableHighWaterMark * 2);
+    this._buffer = new RingBuffer(rs.readableHighWaterMark * 2);
     const tmp = Buffer.alloc(rs.readableHighWaterMark * 2);
     let offset = 0;
     rs.on("data", data => {

@@ -1,4 +1,4 @@
-export class Ringbuffer {
+export class RingBuffer {
   _buffer: Buffer;
   _size: number;
   _rpos: number;

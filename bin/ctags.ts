@@ -1,12 +1,12 @@
-import { Textindexer } from "../index";
-import { Linereader } from "../linereader";
 import * as fs from "fs";
+import { TextIndexer } from "../index";
+import { LineReader } from "../linereader";
 import { performance } from "perf_hooks";
 
 const filename = process.argv[2];
 const lookup = process.argv[3];
 
-const ti = new Textindexer(
+const ti = new TextIndexer(
   filename,
   line => {
     return line.split("\t")[0];
@@ -23,7 +23,7 @@ ti.index().then(async index => {
   const start = performance.now();
   const result = await ti.lookup(lookup);
   if (result) {
-    const lr = new Linereader(
+    const lr = new LineReader(
       fs.createReadStream(process.argv[2], {
         start: result.start,
         end: result.end - 1

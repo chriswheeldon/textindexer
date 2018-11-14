@@ -1,5 +1,5 @@
 import * as fs from "fs";
-import { Linereader, Line } from "./linereader";
+import { LineReader, Line } from "./linereader";
 
 export interface TextIndex {
   start: number;
@@ -27,7 +27,7 @@ class Indexer {
 
     return new Promise<TextIndex>((resolve, _) => {
       const rs = fs.createReadStream(filename);
-      const rl = new Linereader(rs);
+      const rl = new LineReader(rs);
       rl.on("line", (line: Line) => {
         line.value = keyfunc(line.value);
         this.process(line);
@@ -87,7 +87,7 @@ class Indexer {
   }
 }
 
-export class Textindexer {
+export class TextIndexer {
   _filename: string;
   _keyfunc: (line: string) => string;
   _stacksize: number;
