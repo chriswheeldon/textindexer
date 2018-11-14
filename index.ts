@@ -109,13 +109,15 @@ export class TextIndexer {
   }
 
   public index(): Promise<TextIndex> {
-    return this._index.then(_ => {
-      this._index = new Indexer(this._stacksize).index(
-        this._filename,
-        this._keyfunc
-      );
-      return this._index;
-    });
+    return this._index
+      .catch(() => {})
+      .then(_ => {
+        this._index = new Indexer(this._stacksize).index(
+          this._filename,
+          this._keyfunc
+        );
+        return this._index;
+      });
   }
 
   public lookup(key: string): Promise<TextIndex | null> {
