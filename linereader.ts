@@ -1,3 +1,4 @@
+import { EOL } from "os";
 import { ReadStream } from "fs";
 import { EventEmitter } from "events";
 import { RingBuffer } from "./ringbuffer";
@@ -18,7 +19,7 @@ export class LineReader extends EventEmitter {
     rs.on("data", data => {
       if (this._buffer.write(data)) {
         while (true) {
-          const nl = this._buffer.indexOf("\n");
+          const nl = this._buffer.indexOf(EOL);
           if (nl === -1) {
             break;
           }
