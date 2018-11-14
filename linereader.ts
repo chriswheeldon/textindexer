@@ -12,8 +12,8 @@ export class LineReader extends EventEmitter {
 
   constructor(rs: ReadStream) {
     super();
-    this._buffer = new RingBuffer(rs.readableHighWaterMark * 2);
-    const tmp = Buffer.alloc(rs.readableHighWaterMark * 2);
+    this._buffer = new RingBuffer(128 * 1024);
+    const tmp = Buffer.alloc(128 * 1024);
     let offset = 0;
     rs.on("data", data => {
       if (this._buffer.write(data)) {
