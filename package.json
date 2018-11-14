@@ -1,8 +1,18 @@
 {
-  "name": "txtindx",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "name": "textindexer",
+  "version": "0.0.1",
+  "author": {
+    "name": "Chris Wheeldon",
+    "email": "cdwheeldon@gmail.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/chriswheeldon/textindexer"
+  },
+  "license": "MIT",
+  "description": "TypeScript library providing indexing of sorted textual data.",
+  "main": "build/index.js",
+  "types": "build/index.d.ts",
   "dependencies": {},
   "devDependencies": {
     "@types/mocha": "^5.2.5",
@@ -12,10 +22,9 @@
     "typescript": "^3.1.3"
   },
   "scripts": {
+    "prepack": "tsc",
     "build": "tsc",
     "watch": "tsc -w",
     "test": "mocha build/test/*.js"
-  },
-  "author": "Chris Wheeldon",
-  "license": "MIT"
+  }
 }

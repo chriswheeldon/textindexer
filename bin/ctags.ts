@@ -14,13 +14,13 @@ const ti = new TextIndexer(
   6
 );
 
-const index_start = performance.now();
+const index_start_ms = performance.now();
 ti.index().then(async index => {
   console.log(
     `duration ${performance.now() -
-      index_start}ms, heapUsed = ${process.memoryUsage().heapUsed / 1e6}mb`
+      index_start_ms}ms, heapUsed = ${process.memoryUsage().heapUsed / 1e6}mb`
   );
-  const start = performance.now();
+  const rename_start_ms = performance.now();
   const result = await ti.lookup(lookup);
   if (result) {
     const lr = new LineReader(
@@ -35,7 +35,7 @@ ti.index().then(async index => {
       }
     });
     lr.on("close", () => {
-      console.log(`duration ${performance.now() - start}ms`);
+      console.log(`duration ${performance.now() - rename_start_ms}ms`);
     });
   }
 });
