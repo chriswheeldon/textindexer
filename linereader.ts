@@ -19,14 +19,16 @@ export class LineReader extends EventEmitter {
     rs.on("data", data => {
       if (this._buffer.write(data)) {
         while (true) {
-          const nl = this._buffer.indexOf(EOL);
+          const nl = this._buffer.indexOf("\n");
           if (nl === -1) {
             break;
           }
           this._buffer.read(tmp, nl + 1);
-          if (nl > 0) {
+          const end =
+            nl > 0 && tmp[nl - 1] === "\r".charCodeAt(0) ? nl - 1 : nl;
+          if (end > 0) {
             this.emit("line", {
-              value: tmp.toString(undefined, 0, nl),
+              value: tmp.toString(undefined, 0, end),
               offset: offset
             });
           }

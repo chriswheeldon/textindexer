@@ -9,7 +9,11 @@ const lookup = process.argv[3];
 const ti = new TextIndexer(
   filename,
   line => {
-    return line.split("\t")[0];
+    const ti = line.indexOf("\t");
+    if (ti === -1) {
+      return line.slice(0, ti);
+    }
+    return line;
   },
   6
 );
@@ -42,6 +46,6 @@ ti.index()
       console.log(`${lookup} not found`);
     }
   })
-  .catch((error) => {
+  .catch(error => {
     console.log(error);
   });
